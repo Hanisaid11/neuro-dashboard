@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: #F6F7F9;
+  color: #1B2430;
+  font-family: 'Tajawal', system-ui, sans-serif;
+}
+
+/* tabular numbers for all financial figures so columns line up */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 75, 95, 0.25);
+  border-radius: 8px;
+}
+
+/* visible keyboard focus ring across the app */
+:focus-visible {
+  outline: 2px solid #0F6B68;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
