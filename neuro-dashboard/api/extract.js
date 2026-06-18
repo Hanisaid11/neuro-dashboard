@@ -1,9 +1,11 @@
 // Vercel Serverless Function: POST /api/extract
 // Body: { image: "<base64 без البادئة data:...>", mediaType: "image/jpeg", kind: "income" | "operations" }
 //
-// Requires an ANTHROPIC_API_KEY environment variable set on the Vercel
-// project (Settings -> Environment Variables). The key is only ever used
-// here, on the server - it is never sent to or exposed in the browser.
+// Requires a GEMINI_API_KEY environment variable set on the Vercel project
+// (Settings -> Environment Variables). The key is only ever used here, on
+// the server - it is never sent to or exposed in the browser.
+//
+// Uses Google's Gemini API (free tier available via Google AI Studio).
 
 const INCOME_CATEGORIES = [
   'oldHospital', // استدعاءات - مستشفى قديم
@@ -16,6 +18,8 @@ const INCOME_CATEGORIES = [
   'implantsPct', // نسب البراغي والشنتات
   'salary' // الراتب الأساسي
 ];
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 function buildPrompt(kind) {
   if (kind === 'operations') {
@@ -53,9 +57,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ error: 'ANTHROPIC_API_KEY غير مضبوط على الخادم' });
+    res.status(500).json({ error: 'GEMINI_API_KEY غير مضبوط على الخادم' });
     return;
   }
 
@@ -66,37 +70,39 @@ export default async function handler(req, res) {
       return;
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
-              { type: 'text', text: buildPrompt(kind) }
-            ]
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { inline_data: { mime_type: mediaType || 'image/jpeg', data: image } },
+                { text: buildPrompt(kind) }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json'
           }
-        ]
-      })
-    });
+        })
+      }
+    );
 
     if (!response.ok) {
       const errText = await response.text();
-      res.status(502).json({ error: `Anthropic API error: ${errText}` });
+      res.status(502).json({ error: `Gemini API error: ${errText}` });
       return;
     }
 
     const data = await response.json();
-    const text = (data.content || [])
-      .map((block) => (block.type === 'text' ? block.text : ''))
+    const text = (data.candidates?.[0]?.content?.parts || [])
+      .map((part) => part.text || '')
       .join('')
       .trim();
 
