@@ -1,18 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { Save, Trash2, Stethoscope, CalendarDays, CalendarRange } from 'lucide-react';
+import { Save, Trash2, Stethoscope, CalendarDays, CalendarRange, Table2 } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { addOnCallEntry, deleteOnCallEntry } from '../../db/actions.js';
 import { arabicMonthName, formatArabicDate } from '../../db/fiscalYear.js';
 import {
   Card, SectionTitle, Field, NumberInput, DateInput, TextInput, Select, Button,
-  MonthYearPicker, Badge, formatMoney, EmptyState
+  MonthYearPicker, Badge, formatYER, EmptyState
 } from '../ui/Controls.jsx';
+import OnCallMonthTable from './OnCallMonthTable.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export default function OnCallTab() {
   const { onCallEntries } = useFinanceData();
-  const [mode, setMode] = useState('daily'); // daily | bulk
+  const [mode, setMode] = useState('table'); // table | daily | bulk
   const now = new Date();
 
   // daily form state
@@ -61,26 +62,31 @@ export default function OnCallTab() {
       <div className="grid grid-cols-2 gap-3">
         <Card className="text-center">
           <p className="text-xs text-muted">المستشفى القديم</p>
-          <p className="text-xl font-extrabold text-primary-700 tnum mt-1">{formatMoney(oldTotal)} ج.م</p>
+          <p className="text-xl font-extrabold text-primary-700 tnum mt-1">{formatYER(oldTotal)}</p>
         </Card>
         <Card className="text-center">
           <p className="text-xs text-muted">المستشفى الجديد</p>
-          <p className="text-xl font-extrabold text-primary-700 tnum mt-1">{formatMoney(newTotal)} ج.م</p>
+          <p className="text-xl font-extrabold text-primary-700 tnum mt-1">{formatYER(newTotal)}</p>
         </Card>
       </div>
 
       <Card>
-        <SectionTitle icon={Stethoscope} title="الاستدعاءات / الاستشارات" subtitle={`إجمالي عام: ${formatMoney(oldTotal + newTotal)} ج.م`} />
-        <div className="flex gap-2 mb-4">
+        <SectionTitle icon={Stethoscope} title="الاستدعاءات / الاستشارات" subtitle={`إجمالي عام: ${formatYER(oldTotal + newTotal)}`} />
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          <Button variant={mode === 'table' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('table')}>
+            <Table2 size={14} /> جدول الشهر كامل
+          </Button>
           <Button variant={mode === 'daily' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('daily')}>
-            <CalendarDays size={14} /> إدخال يومي
+            <CalendarDays size={14} /> إدخال يوم واحد
           </Button>
           <Button variant={mode === 'bulk' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('bulk')}>
-            <CalendarRange size={14} /> إدخال إجمالي شهر سابق
+            <CalendarRange size={14} /> إجمالي شهر سابق
           </Button>
         </div>
 
-        {mode === 'daily' ? (
+        {mode === 'table' ? (
+          <OnCallMonthTable />
+        ) : mode === 'daily' ? (
           <form onSubmit={handleDailySave} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="التاريخ" required>
@@ -93,7 +99,7 @@ export default function OnCallTab() {
                 </Select>
               </Field>
             </div>
-            <Field label="المبلغ (ج.م)" required>
+            <Field label="المبلغ (ريال)" required>
               <NumberInput value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </Field>
             <Field label="ملاحظة (اختياري)">
@@ -110,7 +116,7 @@ export default function OnCallTab() {
                 <option value="new">مستشفى جديد</option>
               </Select>
             </Field>
-            <Field label="إجمالي الشهر (ج.م)" hint="لتسجيل بيانات تاريخية بسرعة بدون تفاصيل يومية" required>
+            <Field label="إجمالي الشهر (ريال)" hint="لتسجيل بيانات تاريخية بسرعة بدون تفاصيل يومية" required>
               <NumberInput value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} required />
             </Field>
             <Button type="submit"><Save size={16} /> حفظ الإجمالي</Button>
@@ -136,7 +142,7 @@ export default function OnCallTab() {
                   </div>
                   {row.note && <p className="text-xs text-muted mt-0.5">{row.note}</p>}
                 </div>
-                <p className="font-bold text-primary-700 tnum">{formatMoney(row.amount)} ج.م</p>
+                <p className="font-bold text-primary-700 tnum">{formatYER(row.amount)}</p>
                 <button
                   onClick={() => deleteOnCallEntry(row.id)}
                   className="text-leave-500 p-2 hover:bg-leave-100 rounded-lg"

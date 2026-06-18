@@ -22,6 +22,65 @@ export function deleteFixedPercentages(id) {
   return db.fixedPercentages.delete(id);
 }
 
+// One-time historical salary seed, as specified by the user:
+//   1/4/2023 - 31/3/2025 -> $2500/month
+//   1/4/2025 - 31/3/2026 -> $3000/month
+//   1/4/2026 - current month -> $3500/month
+// Runs automatically once (guarded by an appMeta flag) and never overwrites
+// a month that already has a value, so it is always safe to re-run.
+const HISTORICAL_SALARY_PLAN = [
+  { from: { year: 2023, month: 4 }, to: { year: 2025, month: 3 }, amount: 2500 },
+  { from: { year: 2025, month: 4 }, to: { year: 2026, month: 3 }, amount: 3000 },
+  { from: { year: 2026, month: 4 }, to: null, amount: 3500 }
+];
+
+export async function seedHistoricalSalaryIfNeeded() {
+  const already = await getAppMeta('seededHistoricalSalary', false);
+  if (already) return false;
+
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+
+  for (const plan of HISTORICAL_SALARY_PLAN) {
+    let y = plan.from.year;
+    let m = plan.from.month;
+    const toY = plan.to ? plan.to.year : curYear;
+    const toM = plan.to ? plan.to.month : curMonth;
+    while (y < toY || (y === toY && m <= toM)) {
+      const existing = await db.monthlySalaries.where({ year: y, month: m }).first();
+      if (!existing) {
+        await db.monthlySalaries.add({ year: y, month: m, amount: plan.amount });
+      }
+      m += 1;
+      if (m > 12) {
+        m = 1;
+        y += 1;
+      }
+    }
+  }
+
+  await setAppMeta('seededHistoricalSalary', true);
+  return true;
+}
+
+export async function upsertOnCallDay(date, hospital, amount) {
+  const existing = await db.onCallEntries
+    .where({ date, hospital })
+    .filter((e) => !e.isBulk)
+    .first();
+  const num = Number(amount) || 0;
+  if (num === 0) {
+    if (existing) await db.onCallEntries.delete(existing.id);
+    return null;
+  }
+  if (existing) {
+    await db.onCallEntries.update(existing.id, { amount: num });
+    return existing.id;
+  }
+  return db.onCallEntries.add({ date, hospital, amount: num, isBulk: false });
+}
+
 export function addOnCallEntry(entry) {
   return db.onCallEntries.add(entry);
 }

@@ -4,7 +4,7 @@ import { useFinanceData } from '../hooks/useFinanceData.js';
 import { addLeavePeriod, deleteLeavePeriod, deleteOperationType, clearAllData } from '../db/actions.js';
 import { computeFiscalYearSummary } from '../db/calculations.js';
 import { fiscalYearOptions, formatArabicDate } from '../db/fiscalYear.js';
-import { Card, SectionTitle, Field, DateInput, TextInput, Button, Badge, EmptyState, formatMoney } from '../components/ui/Controls.jsx';
+import { Card, SectionTitle, Field, DateInput, TextInput, Button, Badge, EmptyState, formatUSD } from '../components/ui/Controls.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -103,7 +103,7 @@ export default function LeaveSettings() {
                 {s.hasLeaveOverlap ? (
                   <Badge tone="leave"><Plane size={12} /> يوجد سفر</Badge>
                 ) : s.bonusEligible ? (
-                  <Badge tone="success"><Gift size={12} /> مكافأة {formatMoney(s.bonus)} ج.م</Badge>
+                  <Badge tone="success"><Gift size={12} /> مكافأة {formatUSD(s.bonusUSD)}</Badge>
                 ) : (
                   <Badge tone="muted">لم تكتمل</Badge>
                 )}

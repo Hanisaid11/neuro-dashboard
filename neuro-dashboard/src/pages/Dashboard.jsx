@@ -1,17 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend, LineChart, Line
 } from 'recharts';
 import { Wallet, Stethoscope, Pill, Percent, Gift, Scissors, TrendingUp, Plane } from 'lucide-react';
 import { useFinanceData } from '../hooks/useFinanceData.js';
 import { computeFiscalYearSummary, operationsStats } from '../db/calculations.js';
 import { fiscalYearOptions, arabicMonthName, getFiscalYearLabel } from '../db/fiscalYear.js';
-import { Card, SectionTitle, Select, Badge, formatMoney, EmptyState } from '../components/ui/Controls.jsx';
+import { Card, SectionTitle, Select, Badge, formatUSD, formatYER, EmptyState } from '../components/ui/Controls.jsx';
 import FiscalCycleRing from '../components/charts/FiscalCycleRing.jsx';
 
+// YER income streams only - salary/bonus are USD and never mixed in here
 const STREAM_COLORS = {
-  'الراتب الأساسي': '#114B5F',
   'استدعاءات - مستشفى قديم': '#4C8C8B',
   'استدعاءات - مستشفى جديد': '#7FB3B0',
   'نسب أدوية': '#C9962C',
@@ -19,8 +19,7 @@ const STREAM_COLORS = {
   'نسب رنين': '#3D7DB0',
   'نسب تخطيط أعصاب': '#4F9D69',
   'نسب تخطيط دماغ': '#B0563D',
-  'نسب براغي وشنتات': '#8A8F45',
-  'مكافأة عدم سفر': '#2F9E68'
+  'نسب براغي وشنتات': '#8A8F45'
 };
 
 const TONE_CLASSES = {
@@ -29,7 +28,8 @@ const TONE_CLASSES = {
   success: 'bg-success-100 text-success-500'
 };
 
-function StatCard({ icon: Icon, label, value, tone = 'primary' }) {
+function StatCard({ icon: Icon, label, value, currency = 'yer', tone = 'primary' }) {
+  const formatted = currency === 'usd' ? formatUSD(value) : formatYER(value);
   return (
     <Card className="flex items-center gap-3" padded>
       <span className={`flex items-center justify-center w-11 h-11 rounded-xl shrink-0 ${TONE_CLASSES[tone] || TONE_CLASSES.primary}`}>
@@ -37,7 +37,7 @@ function StatCard({ icon: Icon, label, value, tone = 'primary' }) {
       </span>
       <div className="min-w-0">
         <p className="text-xs text-muted truncate">{label}</p>
-        <p className="text-lg font-extrabold text-ink tnum truncate">{formatMoney(value)} ج.م</p>
+        <p className="text-lg font-extrabold text-ink tnum truncate">{formatted}</p>
       </div>
     </Card>
   );
@@ -62,15 +62,17 @@ export default function Dashboard() {
 
   const monthlyChartData = summary.months.map((m) => ({
     name: arabicMonthName(m.month).slice(0, 4),
-    'الراتب الأساسي': m.salary,
     'الاستدعاءات': m.onCallTotal,
     'نسب أدوية': m.medicationsTotal,
-    'نسب ثابتة': m.fixedTotal,
-    الإجمالي: m.total
+    'نسب ثابتة': m.fixedTotal
+  }));
+
+  const salaryChartData = summary.months.map((m) => ({
+    name: arabicMonthName(m.month).slice(0, 4),
+    'الراتب': m.salaryUSD
   }));
 
   const pieData = [
-    { name: 'الراتب الأساسي', value: summary.subtotals.salary },
     { name: 'استدعاءات - مستشفى قديم', value: summary.subtotals.oldHospitalTotal },
     { name: 'استدعاءات - مستشفى جديد', value: summary.subtotals.newHospitalTotal },
     { name: 'نسب أدوية', value: summary.subtotals.medicationsTotal },
@@ -78,8 +80,7 @@ export default function Dashboard() {
     { name: 'نسب رنين', value: summary.subtotals.mriPct },
     { name: 'نسب تخطيط أعصاب', value: summary.subtotals.nervePct },
     { name: 'نسب تخطيط دماغ', value: summary.subtotals.eegPct },
-    { name: 'نسب براغي وشنتات', value: summary.subtotals.implantsPct },
-    ...(summary.bonus > 0 ? [{ name: 'مكافأة عدم سفر', value: summary.bonus }] : [])
+    { name: 'نسب براغي وشنتات', value: summary.subtotals.implantsPct }
   ].filter((d) => d.value > 0);
 
   const opsTypeData = opsStats.typeBreakdown.slice(0, 8).map((t) => ({ name: t.type, عدد: t.count }));
@@ -112,23 +113,24 @@ export default function Dashboard() {
         <FiscalCycleRing
           months={summary.months}
           label={summary.label}
-          grandTotal={summary.grandTotal}
+          grandTotalYER={summary.grandTotalYER}
+          grandTotalUSD={summary.grandTotalUSD}
           selectedIndex={selectedIndex}
           onSelect={setSelectedIndex}
         />
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        <StatCard icon={Wallet} label="الراتب الأساسي" value={summary.subtotals.salary} />
+        <StatCard icon={Wallet} label="الراتب الأساسي" value={summary.subtotals.salaryUSD} currency="usd" tone="accent" />
+        {summary.bonusUSD > 0 && <StatCard icon={Gift} label="مكافأة عدم السفر" value={summary.bonusUSD} currency="usd" tone="success" />}
         <StatCard icon={Stethoscope} label="إجمالي الاستدعاءات" value={summary.subtotals.onCallTotal} tone="primary" />
         <StatCard icon={Pill} label="نسب الأدوية" value={summary.subtotals.medicationsTotal} tone="accent" />
         <StatCard icon={Percent} label="النسب الثابتة" value={summary.subtotals.fixedTotal} tone="primary" />
-        {summary.bonus > 0 && <StatCard icon={Gift} label="مكافأة عدم السفر" value={summary.bonus} tone="success" />}
-        <StatCard icon={TrendingUp} label="إجمالي السنة" value={summary.grandTotal} tone="primary" />
+        <StatCard icon={TrendingUp} label="إجمالي باقي الدخل" value={summary.grandTotalYER} tone="primary" />
       </div>
 
       <Card>
-        <SectionTitle icon={TrendingUp} title="الدخل الشهري عبر السنة المالية" subtitle="مقارنة بين مصادر الدخل المختلفة" />
+        <SectionTitle icon={TrendingUp} title="الدخل الشهري بالريال" subtitle="مقارنة بين الاستدعاءات ونسب الأدوية والنسب الثابتة" />
         <div className="overflow-x-auto">
           <div className="min-w-[640px] h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -136,11 +138,10 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#EAF3F2" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} width={50} />
-                <Tooltip formatter={(v) => `${formatMoney(v)} ج.م`} />
+                <Tooltip formatter={(v) => formatYER(v)} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="الراتب الأساسي" stackId="a" fill={STREAM_COLORS['الراتب الأساسي']} radius={[0, 0, 0, 0]} />
                 <Bar dataKey="الاستدعاءات" stackId="a" fill="#4C8C8B" />
-                <Bar dataKey="نسب أدوية" stackId="a" fill={STREAM_COLORS['نسب أدوية']} />
+                <Bar dataKey="نسب أدوية" stackId="a" fill="#C9962C" />
                 <Bar dataKey="نسب ثابتة" stackId="a" fill="#6B5CA5" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -148,9 +149,26 @@ export default function Dashboard() {
         </div>
       </Card>
 
+      <Card>
+        <SectionTitle icon={Wallet} title="الراتب الشهري بالدولار" subtitle="عبر السنة المالية المحددة" />
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px] h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={salaryChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EAF3F2" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} width={50} />
+                <Tooltip formatter={(v) => formatUSD(v)} />
+                <Line type="monotone" dataKey="الراتب" stroke="#C9962C" strokeWidth={2.5} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid lg:grid-cols-2 gap-5">
         <Card>
-          <SectionTitle icon={Percent} title="توزيع الدخل السنوي" subtitle="حسب مصدر الدخل" />
+          <SectionTitle icon={Percent} title="توزيع الدخل السنوي بالريال" subtitle="حسب مصدر الدخل" />
           {pieData.length === 0 ? (
             <EmptyState icon={Percent} title="لا توجد بيانات كافية" hint="أضف مدخولات هذه السنة لعرض التوزيع" />
           ) : (
@@ -162,7 +180,7 @@ export default function Dashboard() {
                       <Cell key={entry.name} fill={STREAM_COLORS[entry.name] || '#A0AEC0'} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v) => `${formatMoney(v)} ج.م`} />
+                  <Tooltip formatter={(v) => formatYER(v)} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>

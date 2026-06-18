@@ -128,6 +128,18 @@ export function formatMoney(n) {
   return num.toLocaleString('ar-EG', { maximumFractionDigits: 0 });
 }
 
+// Base salary currency
+export function formatUSD(n) {
+  const num = Number(n) || 0;
+  return `${num.toLocaleString('en-US', { maximumFractionDigits: 0 })} $`;
+}
+
+// Every other income stream's currency
+export function formatYER(n) {
+  const num = Number(n) || 0;
+  return `${num.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ر.ي`;
+}
+
 const MONTHS_AR = [
   'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'

@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Wallet, Stethoscope, Pill, Percent } from 'lucide-react';
+import { Wallet, Stethoscope, Pill, Percent, Camera } from 'lucide-react';
 import SalaryTab from '../components/income/SalaryTab.jsx';
 import OnCallTab from '../components/income/OnCallTab.jsx';
 import MedicationsTab from '../components/income/MedicationsTab.jsx';
 import FixedPercentagesTab from '../components/income/FixedPercentagesTab.jsx';
+import IncomePhotoImport from '../components/income/IncomePhotoImport.jsx';
 
 const TABS = [
   { key: 'salary', label: 'الراتب', icon: Wallet, Component: SalaryTab },
   { key: 'oncall', label: 'الاستدعاءات', icon: Stethoscope, Component: OnCallTab },
   { key: 'medications', label: 'نسب أدوية', icon: Pill, Component: MedicationsTab },
-  { key: 'fixed', label: 'نسب ثابتة', icon: Percent, Component: FixedPercentagesTab }
+  { key: 'fixed', label: 'نسب ثابتة', icon: Percent, Component: FixedPercentagesTab },
+  { key: 'photo', label: 'استيراد بالصورة', icon: Camera, Component: IncomePhotoImport }
 ];
 
 export default function IncomeEntry() {

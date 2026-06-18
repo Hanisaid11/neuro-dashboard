@@ -5,7 +5,7 @@ import { addMedicationEntry, deleteMedicationEntry } from '../../db/actions.js';
 import { arabicMonthName, formatArabicDate } from '../../db/fiscalYear.js';
 import {
   Card, SectionTitle, Field, NumberInput, DateInput, TextInput, Button,
-  MonthYearPicker, Badge, formatMoney, EmptyState
+  MonthYearPicker, Badge, formatYER, EmptyState
 } from '../ui/Controls.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -58,7 +58,7 @@ export default function MedicationsTab() {
         <SectionTitle
           icon={Pill}
           title="نسب الأدوية"
-          subtitle={`إجمالي مسجّل: ${formatMoney(total)} ج.م`}
+          subtitle={`إجمالي مسجّل: ${formatYER(total)}`}
         />
         <div className="flex gap-2 mb-4">
           <Button variant={mode === 'daily' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('daily')}>
@@ -77,7 +77,7 @@ export default function MedicationsTab() {
             <Field label="اسم العنصر / البند">
               <TextInput value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="مثال: دواء معين" />
             </Field>
-            <Field label="القيمة / النسبة (ج.م)" required>
+            <Field label="القيمة / النسبة (ريال)" required>
               <NumberInput value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </Field>
             <Button type="submit"><Save size={16} /> حفظ الإدخال</Button>
@@ -88,7 +88,7 @@ export default function MedicationsTab() {
             <Field label="اسم العنصر / البند (اختياري)">
               <TextInput value={bulkItemName} onChange={(e) => setBulkItemName(e.target.value)} />
             </Field>
-            <Field label="إجمالي الشهر (ج.م)" required>
+            <Field label="إجمالي الشهر (ريال)" required>
               <NumberInput value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} required />
             </Field>
             <Button type="submit"><Save size={16} /> حفظ الإجمالي</Button>
@@ -111,7 +111,7 @@ export default function MedicationsTab() {
                   </div>
                   {row.itemName && <p className="text-xs text-muted mt-0.5">{row.itemName}</p>}
                 </div>
-                <p className="font-bold text-accent-600 tnum">{formatMoney(row.amount)} ج.م</p>
+                <p className="font-bold text-accent-600 tnum">{formatYER(row.amount)}</p>
                 <button
                   onClick={() => deleteMedicationEntry(row.id)}
                   className="text-leave-500 p-2 hover:bg-leave-100 rounded-lg"

@@ -4,7 +4,7 @@ import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { upsertMonthlySalary } from '../../db/actions.js';
 import { db } from '../../db/db.js';
 import { arabicMonthName } from '../../db/fiscalYear.js';
-import { Card, SectionTitle, Field, NumberInput, Button, MonthYearPicker, formatMoney, EmptyState } from '../ui/Controls.jsx';
+import { Card, SectionTitle, Field, NumberInput, Button, MonthYearPicker, formatUSD, EmptyState } from '../ui/Controls.jsx';
 
 export default function SalaryTab() {
   const { monthlySalaries } = useFinanceData();
@@ -37,7 +37,7 @@ export default function SalaryTab() {
         <SectionTitle icon={Wallet} title="الراتب الأساسي الشهري" subtitle="يمكن تعديله لكل شهر/سنة على حدة" />
         <form onSubmit={handleSave} className="space-y-4">
           <MonthYearPicker year={year} month={month} onYearChange={setYear} onMonthChange={setMonth} />
-          <Field label="قيمة الراتب (ج.م)" required>
+          <Field label="قيمة الراتب (دولار $)" required>
             <NumberInput value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="مثال: 15000" required />
           </Field>
           <Button type="submit" disabled={saving}>
@@ -56,7 +56,7 @@ export default function SalaryTab() {
               <div key={row.id} className="flex items-center justify-between py-3 gap-3">
                 <button onClick={() => loadRow(row)} className="text-right flex-1">
                   <p className="font-semibold text-ink">{arabicMonthName(row.month)} {row.year}</p>
-                  <p className="text-sm text-primary-600 font-bold tnum">{formatMoney(row.amount)} ج.م</p>
+                  <p className="text-sm text-primary-600 font-bold tnum">{formatUSD(row.amount)}</p>
                 </button>
                 <button
                   onClick={() => db.monthlySalaries.delete(row.id)}

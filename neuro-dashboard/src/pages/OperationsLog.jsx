@@ -5,6 +5,7 @@ import { addOperation, deleteOperation, ensureOperationType } from '../db/action
 import { formatArabicDate } from '../db/fiscalYear.js';
 import { Card, SectionTitle, Field, DateInput, TextInput, TextArea, Button, EmptyState } from '../components/ui/Controls.jsx';
 import ComboBox from '../components/ComboBox.jsx';
+import OperationsPhotoImport from '../components/OperationsPhotoImport.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -73,6 +74,8 @@ export default function OperationsLog() {
           </Button>
         </form>
       </Card>
+
+      <OperationsPhotoImport />
 
       <Card>
         <SectionTitle title={`سجل العمليات (${operations.length})`} />

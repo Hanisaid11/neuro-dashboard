@@ -3,7 +3,7 @@ import { Save, Trash2, Percent } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { upsertFixedPercentages, deleteFixedPercentages } from '../../db/actions.js';
 import { arabicMonthName } from '../../db/fiscalYear.js';
-import { Card, SectionTitle, Field, NumberInput, Button, MonthYearPicker, formatMoney, EmptyState } from '../ui/Controls.jsx';
+import { Card, SectionTitle, Field, NumberInput, Button, MonthYearPicker, formatYER, EmptyState } from '../ui/Controls.jsx';
 
 const FIELDS = [
   { key: 'hospitalPct', label: 'نسب مستشفى' },
@@ -86,7 +86,7 @@ export default function FixedPercentagesTab() {
                   <div className="flex items-center justify-between gap-3">
                     <button onClick={() => loadRow(row)} className="text-right flex-1">
                       <p className="font-semibold text-ink">{arabicMonthName(row.month)} {row.year}</p>
-                      <p className="text-sm text-primary-600 font-bold tnum">{formatMoney(rowTotal)} ج.م إجمالي</p>
+                      <p className="text-sm text-primary-600 font-bold tnum">{formatYER(rowTotal)} إجمالي</p>
                     </button>
                     <button
                       onClick={() => deleteFixedPercentages(row.id)}
@@ -98,7 +98,7 @@ export default function FixedPercentagesTab() {
                   </div>
                   <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted">
                     {FIELDS.map(({ key, label }) => (
-                      <span key={key}>{label}: <span className="font-semibold text-ink tnum">{formatMoney(row[key])}</span></span>
+                      <span key={key}>{label}: <span className="font-semibold text-ink tnum">{formatYER(row[key])}</span></span>
                     ))}
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { arabicMonthName } from '../../db/fiscalYear.js';
-import { formatMoney } from '../ui/Controls.jsx';
+import { formatUSD, formatYER } from '../ui/Controls.jsx';
 
 const CX = 100;
 const CY = 100;
@@ -27,7 +27,7 @@ function segmentPath(startAngle, endAngle) {
   ].join(' ');
 }
 
-export default function FiscalCycleRing({ months, label, grandTotal, selectedIndex, onSelect }) {
+export default function FiscalCycleRing({ months, label, grandTotalYER, grandTotalUSD, selectedIndex, onSelect }) {
   const now = new Date();
   const today = { year: now.getFullYear(), month: now.getMonth() + 1 };
   const active = months[selectedIndex];
@@ -40,7 +40,7 @@ export default function FiscalCycleRing({ months, label, grandTotal, selectedInd
             const startAngle = i * 30 + GAP_DEG / 2;
             const endAngle = (i + 1) * 30 - GAP_DEG / 2;
             const isLeave = m.fullyOnLeave;
-            const hasData = m.total > 0;
+            const hasData = m.totalYER > 0;
             const isToday = m.year === today.year && m.month === today.month;
             const isSelected = selectedIndex === i;
             const fill = isLeave ? '#C45B4F' : hasData ? '#0F6B68' : '#E2E6EA';
@@ -69,10 +69,12 @@ export default function FiscalCycleRing({ months, label, grandTotal, selectedInd
             );
           })}
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <span className="text-[11px] text-muted font-semibold">{label}</span>
-          <span className="text-xl font-extrabold text-ink tnum mt-0.5">{formatMoney(grandTotal)}</span>
-          <span className="text-[10px] text-muted">إجمالي السنة (ج.م)</span>
+          <span className="text-lg font-extrabold text-ink tnum mt-0.5 leading-tight">{formatYER(grandTotalYER)}</span>
+          <span className="text-[10px] text-muted">إجمالي باقي الدخل</span>
+          <span className="text-sm font-bold text-accent-600 tnum mt-1.5 leading-tight">{formatUSD(grandTotalUSD)}</span>
+          <span className="text-[10px] text-muted">الراتب + المكافأة</span>
         </div>
       </div>
 
@@ -87,7 +89,8 @@ export default function FiscalCycleRing({ months, label, grandTotal, selectedInd
             ) : (
               <p className="text-sm text-muted mt-1">دخل الشهر الكامل</p>
             )}
-            <p className="text-2xl font-extrabold text-primary-700 tnum mt-2">{formatMoney(active.total)} ج.م</p>
+            <p className="text-2xl font-extrabold text-primary-700 tnum mt-2">{formatYER(active.totalYER)}</p>
+            <p className="text-sm font-semibold text-accent-600 tnum mt-1">الراتب: {formatUSD(active.salaryUSD)}</p>
             {active.excludedCount > 0 && (
               <p className="text-xs text-leave-500 mt-1">
                 تم استثناء {active.excludedCount} مدخل بسبب الإجازة
