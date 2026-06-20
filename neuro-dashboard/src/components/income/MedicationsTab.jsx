@@ -5,7 +5,7 @@ import { addMedicationEntry, deleteMedicationEntry } from '../../db/actions.js';
 import { arabicMonthName, formatArabicDate } from '../../db/fiscalYear.js';
 import {
   Card, SectionTitle, Field, NumberInput, DateInput, TextInput, Button,
-  MonthYearPicker, Badge, formatYER, EmptyState
+  MonthYearPicker, Badge, formatYER, toYERDisplay, fromYERDisplay, EmptyState
 } from '../ui/Controls.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -17,17 +17,17 @@ export default function MedicationsTab() {
 
   const [date, setDate] = useState(todayISO());
   const [itemName, setItemName] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(''); // display value in thousands
 
   const [bulkYear, setBulkYear] = useState(now.getFullYear());
   const [bulkMonth, setBulkMonth] = useState(now.getMonth() + 1);
   const [bulkItemName, setBulkItemName] = useState('');
-  const [bulkAmount, setBulkAmount] = useState('');
+  const [bulkAmount, setBulkAmount] = useState(''); // display value in thousands
 
   async function handleDailySave(e) {
     e.preventDefault();
     if (!amount) return;
-    await addMedicationEntry({ date, itemName, amount: Number(amount), isBulk: false });
+    await addMedicationEntry({ date, itemName, amount: fromYERDisplay(amount), isBulk: false });
     setItemName('');
     setAmount('');
   }
@@ -39,7 +39,7 @@ export default function MedicationsTab() {
     await addMedicationEntry({
       date: entryDate,
       itemName: bulkItemName || `إجمالي ${arabicMonthName(bulkMonth)} ${bulkYear}`,
-      amount: Number(bulkAmount),
+      amount: fromYERDisplay(bulkAmount),
       isBulk: true
     });
     setBulkItemName('');
@@ -55,17 +55,14 @@ export default function MedicationsTab() {
   return (
     <div className="space-y-5">
       <Card>
-        <SectionTitle
-          icon={Pill}
-          title="نسب الأدوية"
-          subtitle={`إجمالي مسجّل: ${formatYER(total)}`}
-        />
+        <SectionTitle icon={Pill} title="نسب الأدوية" subtitle={`إجمالي مسجّل: ${formatYER(total)}`} />
+        <p className="text-xs text-muted mb-3">الوحدة: ألف ريال — اكتب 7 يعني 7000 ر.ي</p>
         <div className="flex gap-2 mb-4">
           <Button variant={mode === 'daily' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('daily')}>
             <CalendarDays size={14} /> إدخال يومي
           </Button>
           <Button variant={mode === 'bulk' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('bulk')}>
-            <CalendarRange size={14} /> إدخال إجمالي شهر سابق
+            <CalendarRange size={14} /> إجمالي شهر سابق
           </Button>
         </div>
 
@@ -77,8 +74,8 @@ export default function MedicationsTab() {
             <Field label="اسم العنصر / البند">
               <TextInput value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="مثال: دواء معين" />
             </Field>
-            <Field label="القيمة / النسبة (ريال)" required>
-              <NumberInput value={amount} onChange={(e) => setAmount(e.target.value)} required />
+            <Field label="القيمة (ألف ر.ي)" required>
+              <NumberInput value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="مثال: 7 = 7000 ر.ي" required />
             </Field>
             <Button type="submit"><Save size={16} /> حفظ الإدخال</Button>
           </form>
@@ -88,8 +85,8 @@ export default function MedicationsTab() {
             <Field label="اسم العنصر / البند (اختياري)">
               <TextInput value={bulkItemName} onChange={(e) => setBulkItemName(e.target.value)} />
             </Field>
-            <Field label="إجمالي الشهر (ريال)" required>
-              <NumberInput value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} required />
+            <Field label="إجمالي الشهر (ألف ر.ي)" required>
+              <NumberInput value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} placeholder="مثال: 150 = 150,000 ر.ي" required />
             </Field>
             <Button type="submit"><Save size={16} /> حفظ الإجمالي</Button>
           </form>
@@ -112,11 +109,7 @@ export default function MedicationsTab() {
                   {row.itemName && <p className="text-xs text-muted mt-0.5">{row.itemName}</p>}
                 </div>
                 <p className="font-bold text-accent-600 tnum">{formatYER(row.amount)}</p>
-                <button
-                  onClick={() => deleteMedicationEntry(row.id)}
-                  className="text-leave-500 p-2 hover:bg-leave-100 rounded-lg"
-                  aria-label="حذف"
-                >
+                <button onClick={() => deleteMedicationEntry(row.id)} className="text-leave-500 p-2 hover:bg-leave-100 rounded-lg" aria-label="حذف">
                   <Trash2 size={16} />
                 </button>
               </div>

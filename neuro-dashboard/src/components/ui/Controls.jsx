@@ -125,7 +125,7 @@ export function EmptyState({ icon: Icon, title, hint }) {
 
 export function formatMoney(n) {
   const num = Number(n) || 0;
-  return num.toLocaleString('ar-EG', { maximumFractionDigits: 0 });
+  return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 
 // Base salary currency
@@ -134,10 +134,26 @@ export function formatUSD(n) {
   return `${num.toLocaleString('en-US', { maximumFractionDigits: 0 })} $`;
 }
 
-// Every other income stream's currency
+// Every other income stream's currency - displayed in thousands (ألف ر.ي)
+// Storage stays in actual YER; this formatter just divides by 1000.
 export function formatYER(n) {
   const num = Number(n) || 0;
-  return `${num.toLocaleString('ar-EG', { maximumFractionDigits: 0 })} ر.ي`;
+  const k = num / 1000;
+  // show one decimal only when needed (e.g. 7.5 ألف), strip trailing ".0"
+  const formatted = k % 1 === 0
+    ? k.toLocaleString('en-US', { maximumFractionDigits: 0 })
+    : k.toLocaleString('en-US', { maximumFractionDigits: 1 });
+  return `${formatted} ألف ر.ي`;
+}
+
+// YER inputs: user types in thousands → value shown is stored/1000
+// The input itself converts on blur: stored value = typed * 1000
+export function toYERDisplay(storedValue) {
+  const n = Number(storedValue) || 0;
+  return n === 0 ? '' : String(n / 1000);
+}
+export function fromYERDisplay(typedValue) {
+  return (Number(typedValue) || 0) * 1000;
 }
 
 const MONTHS_AR = [

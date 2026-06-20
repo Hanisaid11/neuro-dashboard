@@ -22,6 +22,23 @@ export function deleteFixedPercentages(id) {
   return db.fixedPercentages.delete(id);
 }
 
+// ── Monthly photos ────────────────────────────────────────────────────────────
+export async function addMonthlyPhoto(year, month, photoBase64, caption = '') {
+  return db.monthlyPhotos.add({ year, month, photoBase64, caption, createdAt: new Date().toISOString() });
+}
+
+export async function getMonthlyPhotos(year, month) {
+  return db.monthlyPhotos.where({ year, month }).toArray();
+}
+
+export async function updateMonthlyPhotoCaption(id, caption) {
+  return db.monthlyPhotos.update(id, { caption });
+}
+
+export async function deleteMonthlyPhoto(id) {
+  return db.monthlyPhotos.delete(id);
+}
+
 // One-time historical salary seed, as specified by the user:
 //   1/4/2023 - 31/3/2025 -> $2500/month
 //   1/4/2025 - 31/3/2026 -> $3000/month
@@ -100,6 +117,11 @@ export function deleteMedicationEntry(id) {
 export async function addOperation(entry) {
   if (entry.operationType) await ensureOperationType(entry.operationType);
   return db.operations.add(entry);
+}
+
+export async function updateOperation(id, fields) {
+  if (fields.operationType) await ensureOperationType(fields.operationType);
+  return db.operations.update(id, fields);
 }
 
 export function deleteOperation(id) {

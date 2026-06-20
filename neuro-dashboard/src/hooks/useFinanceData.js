@@ -1,8 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 
-// Single source of truth for every page: re-renders automatically whenever
-// any underlying Dexie table changes, no manual refetching required.
 export function useFinanceData() {
   const data = useLiveQuery(async () => {
     const [
@@ -12,7 +10,8 @@ export function useFinanceData() {
       fixedPercentages,
       operations,
       operationTypes,
-      leavePeriods
+      leavePeriods,
+      monthlyPhotos
     ] = await Promise.all([
       db.monthlySalaries.toArray(),
       db.onCallEntries.toArray(),
@@ -20,7 +19,8 @@ export function useFinanceData() {
       db.fixedPercentages.toArray(),
       db.operations.orderBy('date').reverse().toArray(),
       db.operationTypes.toArray(),
-      db.leavePeriods.toArray()
+      db.leavePeriods.toArray(),
+      db.monthlyPhotos.toArray()
     ]);
     return {
       monthlySalaries,
@@ -29,7 +29,8 @@ export function useFinanceData() {
       fixedPercentages,
       operations,
       operationTypes,
-      leavePeriods
+      leavePeriods,
+      monthlyPhotos
     };
   }, []);
 
@@ -41,7 +42,8 @@ export function useFinanceData() {
       fixedPercentages: [],
       operations: [],
       operationTypes: [],
-      leavePeriods: []
+      leavePeriods: [],
+      monthlyPhotos: []
     }
   );
 }

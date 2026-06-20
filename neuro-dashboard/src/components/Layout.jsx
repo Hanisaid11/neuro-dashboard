@@ -1,9 +1,10 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain } from 'lucide-react';
+import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain, TableProperties } from 'lucide-react';
 
 export const NAV_ITEMS = [
   { key: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
-  { key: 'income', label: 'المدخولات', icon: Wallet },
+  { key: 'monthly', label: 'المدخولات الشهرية', icon: TableProperties },
+  { key: 'income', label: 'إدخال المدخولات', icon: Wallet },
   { key: 'operations', label: 'العمليات', icon: Scissors },
   { key: 'leave', label: 'الإجازات والإعدادات', icon: CalendarRange },
   { key: 'sync', label: 'المزامنة والنسخ الاحتياطي', icon: CloudCog }
@@ -43,8 +44,9 @@ export default function Layout({ active, onNavigate, children }) {
             );
           })}
         </nav>
-        <div className="px-6 py-4 text-xs text-primary-100/70 border-t border-white/10">
-          السنة المالية: ١ أبريل – ٣١ مارس
+        <div className="px-6 py-4 text-xs text-primary-100/70 border-t border-white/10 flex items-center justify-between">
+          <span>السنة المالية: ١ أبريل – ٣١ مارس</span>
+          <span className="bg-white/10 px-2 py-0.5 rounded-full font-bold">v1</span>
         </div>
       </aside>
 
@@ -60,23 +62,32 @@ export default function Layout({ active, onNavigate, children }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 sm:px-6 py-5 pb-24 md:pb-8 max-w-6xl w-full mx-auto">{children}</main>
+        <main className="flex-1 px-4 sm:px-6 py-5 pb-28 md:pb-8 max-w-6xl w-full mx-auto">{children}</main>
 
-        {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-primary-100/60 flex justify-between px-1 py-1.5 z-20">
+        {/* Mobile bottom nav — 6 items, so use tiny labels */}
+        <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-primary-100/60 flex justify-between px-0.5 py-1 z-20">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key;
+            // Short labels for the cramped mobile bar
+            const SHORT = {
+              dashboard: 'الرئيسية',
+              monthly: 'الشهري',
+              income: 'إدخال',
+              operations: 'العمليات',
+              leave: 'الإجازات',
+              sync: 'المزامنة'
+            };
             return (
               <button
                 key={item.key}
                 onClick={() => onNavigate(item.key)}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-[11px] font-semibold ${
+                className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-[10px] font-semibold ${
                   isActive ? 'text-primary-600' : 'text-muted'
                 }`}
               >
-                <Icon size={18} />
-                <span className="leading-tight text-center">{item.label.split(' ')[0]}</span>
+                <Icon size={17} />
+                <span className="leading-tight text-center">{SHORT[item.key]}</span>
               </button>
             );
           })}

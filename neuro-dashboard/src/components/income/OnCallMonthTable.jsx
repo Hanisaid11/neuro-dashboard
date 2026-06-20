@@ -3,19 +3,20 @@ import { Zap } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { upsertOnCallDay } from '../../db/actions.js';
 import { daysInMonth, arabicMonthName } from '../../db/fiscalYear.js';
-import { Field, NumberInput, Button, MonthYearPicker, formatYER } from '../ui/Controls.jsx';
+import { Field, NumberInput, Button, MonthYearPicker, formatYER, toYERDisplay, fromYERDisplay } from '../ui/Controls.jsx';
+
+// Input unit: ألف ريال (thousands). User types 7 → stored as 7000.
+// Display: existing stored value 7000 → shown as 7 in input, "7 ألف ر.ي" in totals.
 
 const WEEKDAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-
-function pad(n) {
-  return String(n).padStart(2, '0');
-}
+const pad = (n) => String(n).padStart(2, '0');
 
 export default function OnCallMonthTable() {
   const { onCallEntries } = useFinanceData();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  // cells store DISPLAY values (in thousands) for the inputs
   const [cells, setCells] = useState({});
   const [bulkOld, setBulkOld] = useState('');
   const [bulkNew, setBulkNew] = useState('');
@@ -23,7 +24,6 @@ export default function OnCallMonthTable() {
 
   const total = daysInMonth(year, month);
 
-  // rebuild the editable grid whenever the month or underlying data changes
   useEffect(() => {
     const next = {};
     for (let day = 1; day <= total; day++) {
@@ -31,37 +31,33 @@ export default function OnCallMonthTable() {
       const oldEntry = onCallEntries.find((e) => e.date === dateStr && e.hospital === 'old' && !e.isBulk);
       const newEntry = onCallEntries.find((e) => e.date === dateStr && e.hospital === 'new' && !e.isBulk);
       next[day] = {
-        old: oldEntry ? String(oldEntry.amount) : '',
-        new: newEntry ? String(newEntry.amount) : ''
+        old: oldEntry ? toYERDisplay(oldEntry.amount) : '',
+        new: newEntry ? toYERDisplay(newEntry.amount) : ''
       };
     }
     setCells(next);
   }, [year, month, total, onCallEntries]);
 
-  async function commitCell(day, hospital, value) {
+  async function commitCell(day, hospital, displayVal) {
     const dateStr = `${year}-${pad(month)}-${pad(day)}`;
-    setCells((prev) => ({ ...prev, [day]: { ...prev[day], [hospital]: value } }));
-    await upsertOnCallDay(dateStr, hospital, value);
+    await upsertOnCallDay(dateStr, hospital, fromYERDisplay(displayVal));
   }
 
   async function applyToWholeMonth() {
     setApplying(true);
     for (let day = 1; day <= total; day++) {
       const dateStr = `${year}-${pad(month)}-${pad(day)}`;
-      if (bulkOld !== '') await upsertOnCallDay(dateStr, 'old', bulkOld);
-      if (bulkNew !== '') await upsertOnCallDay(dateStr, 'new', bulkNew);
+      if (bulkOld !== '') await upsertOnCallDay(dateStr, 'old', fromYERDisplay(bulkOld));
+      if (bulkNew !== '') await upsertOnCallDay(dateStr, 'new', fromYERDisplay(bulkNew));
     }
     setApplying(false);
     setBulkOld('');
     setBulkNew('');
   }
 
+  // monthTotal in actual YER (sum of display values × 1000)
   const monthTotal = useMemo(
-    () =>
-      Object.values(cells).reduce(
-        (sum, c) => sum + (Number(c.old) || 0) + (Number(c.new) || 0),
-        0
-      ),
+    () => Object.values(cells).reduce((sum, c) => sum + fromYERDisplay(c.old) + fromYERDisplay(c.new), 0),
     [cells]
   );
 
@@ -73,12 +69,13 @@ export default function OnCallMonthTable() {
         <p className="text-sm font-semibold text-ink mb-2 flex items-center gap-1.5">
           <Zap size={14} className="text-accent-500" /> تطبيق قيمة واحدة على كل أيام الشهر
         </p>
+        <p className="text-xs text-muted mb-2">الوحدة: ألف ريال (اكتب 7 = 7000 ر.ي)</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="مستشفى قديم (لكل يوم)">
-            <NumberInput value={bulkOld} onChange={(e) => setBulkOld(e.target.value)} placeholder="اتركه فارغًا للتجاهل" />
+          <Field label="مستشفى قديم (ألف ر.ي / يوم)">
+            <NumberInput value={bulkOld} onChange={(e) => setBulkOld(e.target.value)} placeholder="مثال: 7 = 7000 ر.ي" />
           </Field>
-          <Field label="مستشفى جديد (لكل يوم)">
-            <NumberInput value={bulkNew} onChange={(e) => setBulkNew(e.target.value)} placeholder="اتركه فارغًا للتجاهل" />
+          <Field label="مستشفى جديد (ألف ر.ي / يوم)">
+            <NumberInput value={bulkNew} onChange={(e) => setBulkNew(e.target.value)} placeholder="مثال: 7 = 7000 ر.ي" />
           </Field>
         </div>
         <Button size="sm" className="mt-3" onClick={applyToWholeMonth} disabled={applying || (!bulkOld && !bulkNew)}>
@@ -87,9 +84,7 @@ export default function OnCallMonthTable() {
       </div>
 
       <div className="flex items-center justify-between px-1">
-        <p className="text-sm text-muted">
-          {arabicMonthName(month)} {year} - {total} يوم
-        </p>
+        <p className="text-sm text-muted">{arabicMonthName(month)} {year} - {total} يوم</p>
         <p className="text-sm font-bold text-primary-700 tnum">{formatYER(monthTotal)}</p>
       </div>
 
@@ -98,8 +93,8 @@ export default function OnCallMonthTable() {
           <thead>
             <tr className="bg-primary-50 text-primary-700">
               <th className="py-2 px-3 text-right font-semibold whitespace-nowrap">اليوم</th>
-              <th className="py-2 px-2 text-right font-semibold whitespace-nowrap">مستشفى قديم</th>
-              <th className="py-2 px-2 text-right font-semibold whitespace-nowrap">مستشفى جديد</th>
+              <th className="py-2 px-2 text-right font-semibold whitespace-nowrap">قديم (ألف)</th>
+              <th className="py-2 px-2 text-right font-semibold whitespace-nowrap">جديد (ألف)</th>
               <th className="py-2 px-3 text-right font-semibold whitespace-nowrap">الإجمالي</th>
             </tr>
           </thead>
@@ -108,9 +103,8 @@ export default function OnCallMonthTable() {
               const date = new Date(year, month - 1, day);
               const weekday = WEEKDAYS_AR[date.getDay()];
               const cell = cells[day] || { old: '', new: '' };
-              const rowTotal = (Number(cell.old) || 0) + (Number(cell.new) || 0);
-              const isToday =
-                year === now.getFullYear() && month === now.getMonth() + 1 && day === now.getDate();
+              const rowTotalYER = fromYERDisplay(cell.old) + fromYERDisplay(cell.new);
+              const isToday = year === now.getFullYear() && month === now.getMonth() + 1 && day === now.getDate();
               return (
                 <tr key={day} className={isToday ? 'bg-accent-400/10' : 'bg-white'}>
                   <td className="py-1.5 px-3 whitespace-nowrap">
@@ -122,7 +116,7 @@ export default function OnCallMonthTable() {
                       value={cell.old}
                       onChange={(e) => setCells((prev) => ({ ...prev, [day]: { ...prev[day], old: e.target.value } }))}
                       onBlur={(e) => commitCell(day, 'old', e.target.value)}
-                      className="py-1.5 text-xs min-w-[5.5rem]"
+                      className="py-1.5 text-xs min-w-[4.5rem]"
                       placeholder="0"
                     />
                   </td>
@@ -131,12 +125,12 @@ export default function OnCallMonthTable() {
                       value={cell.new}
                       onChange={(e) => setCells((prev) => ({ ...prev, [day]: { ...prev[day], new: e.target.value } }))}
                       onBlur={(e) => commitCell(day, 'new', e.target.value)}
-                      className="py-1.5 text-xs min-w-[5.5rem]"
+                      className="py-1.5 text-xs min-w-[4.5rem]"
                       placeholder="0"
                     />
                   </td>
                   <td className="py-1.5 px-3 font-semibold text-primary-700 tnum whitespace-nowrap">
-                    {rowTotal > 0 ? formatYER(rowTotal) : '—'}
+                    {rowTotalYER > 0 ? formatYER(rowTotalYER) : '—'}
                   </td>
                 </tr>
               );

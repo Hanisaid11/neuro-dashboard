@@ -9,30 +9,39 @@ import Dexie from 'dexie';
 export const db = new Dexie('NeuroFinanceDB');
 
 db.version(1).stores({
-  // one row per (calendar year, calendar month) holding the base salary
   monthlySalaries: '++id, &[year+month], year',
-
-  // daily on-call / consultation entries, split by hospital
-  // hospital: 'old' | 'new'
   onCallEntries: '++id, date, hospital, isBulk',
-
-  // نسب أدوية - date + item name + amount, also supports bulk monthly rows
   medicationEntries: '++id, date, isBulk',
-
-  // one row per (year, month) holding the five fixed monthly percentage fields
   fixedPercentages: '++id, &[year+month], year',
-
-  // قسم العمليات
   operations: '++id, date, operationType, patientName',
-
-  // global creatable list of operation types for the smart autocomplete
   operationTypes: '++id, &name',
-
-  // إجازات سنوية / سفر
   leavePeriods: '++id, startDate, endDate',
+  appMeta: '++id, &key'
+});
 
-  // small generic key/value store: google drive file id, last sync time,
-  // backup passphrase hint, UI prefs, etc.
+// v2: operations support optional photoBase64
+db.version(2).stores({
+  monthlySalaries: '++id, &[year+month], year',
+  onCallEntries: '++id, date, hospital, isBulk',
+  medicationEntries: '++id, date, isBulk',
+  fixedPercentages: '++id, &[year+month], year',
+  operations: '++id, date, operationType, patientName',
+  operationTypes: '++id, &name',
+  leavePeriods: '++id, startDate, endDate',
+  appMeta: '++id, &key'
+});
+
+// v3: fixedPercentages gains note fields (hospitalPctNote etc.)
+//     new monthlyPhotos table for per-month photo attachments
+db.version(3).stores({
+  monthlySalaries: '++id, &[year+month], year',
+  onCallEntries: '++id, date, hospital, isBulk',
+  medicationEntries: '++id, date, isBulk',
+  fixedPercentages: '++id, &[year+month], year',
+  operations: '++id, date, operationType, patientName',
+  operationTypes: '++id, &name',
+  leavePeriods: '++id, startDate, endDate',
+  monthlyPhotos: '++id, [year+month]',
   appMeta: '++id, &key'
 });
 
