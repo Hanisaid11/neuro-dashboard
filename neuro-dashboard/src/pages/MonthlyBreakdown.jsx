@@ -91,6 +91,16 @@ function MonthRow({ m, fixedRow, monthlyPhotos, defaultOpen }) {
                     <span>مستشفى جديد</span><span className="tnum">{formatYER(m.newHospitalTotal)}</span>
                   </div>
                 )}
+                {m.consultationsTotal > 0 && (
+                  <div className="flex justify-between text-xs text-muted">
+                    <span>استشارات</span><span className="tnum">{formatYER(m.consultationsTotal)}</span>
+                  </div>
+                )}
+                {m.othersTotal > 0 && (
+                  <div className="flex justify-between text-xs text-muted">
+                    <span>أخرى</span><span className="tnum">{formatYER(m.othersTotal)}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

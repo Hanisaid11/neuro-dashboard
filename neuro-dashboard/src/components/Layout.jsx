@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain, TableProperties } from 'lucide-react';
+import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain, TableProperties, Stethoscope } from 'lucide-react';
 
 export const NAV_ITEMS = [
   { key: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
@@ -12,6 +12,7 @@ export const NAV_ITEMS = [
 
 export default function Layout({ active, onNavigate, children }) {
   const activeItem = NAV_ITEMS.find((i) => i.key === active);
+  const showFAB = active !== 'income';
 
   return (
     <div className="min-h-screen flex bg-canvas">
@@ -25,6 +26,15 @@ export default function Layout({ active, onNavigate, children }) {
             <p className="font-extrabold text-lg leading-tight">لوحة المالية</p>
             <p className="text-xs text-primary-100/80">جراحة الأعصاب</p>
           </div>
+        </div>
+        <div className="px-3 py-4 border-b border-white/10">
+          <button
+            onClick={() => onNavigate('income', 'oncall')}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold bg-accent-400/20 text-accent-200 hover:bg-accent-400/30 transition-colors"
+          >
+            <Stethoscope size={18} />
+            تسجيل استدعاء — اليوم
+          </button>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
@@ -64,7 +74,19 @@ export default function Layout({ active, onNavigate, children }) {
 
         <main className="flex-1 px-4 sm:px-6 py-5 pb-28 md:pb-8 max-w-6xl w-full mx-auto">{children}</main>
 
-        {/* Mobile bottom nav — 6 items, so use tiny labels */}
+        {/* Quick-access FAB: jump to on-call table for today from anywhere */}
+        {showFAB && (
+          <button
+            onClick={() => onNavigate('income', 'oncall')}
+            className="md:hidden fixed bottom-20 left-4 z-30 flex items-center gap-2 bg-primary-600 text-white pl-4 pr-5 py-3 rounded-full shadow-xl active:scale-95 transition-transform"
+            aria-label="تسجيل استدعاء"
+          >
+            <Stethoscope size={18} />
+            <span className="text-sm font-bold">استدعاء</span>
+          </button>
+        )}
+
+        {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-primary-100/60 flex justify-between px-0.5 py-1 z-20">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;

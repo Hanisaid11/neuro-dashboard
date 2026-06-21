@@ -11,7 +11,7 @@ import OnCallMonthTable from './OnCallMonthTable.jsx';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-export default function OnCallTab() {
+export default function OnCallTab({ initialScrollToday = false }) {
   const { onCallEntries } = useFinanceData();
   const [mode, setMode] = useState('table'); // table | daily | bulk
   const now = new Date();
@@ -85,7 +85,7 @@ export default function OnCallTab() {
         </div>
 
         {mode === 'table' ? (
-          <OnCallMonthTable />
+          <OnCallMonthTable initialScrollToday={initialScrollToday} />
         ) : mode === 'daily' ? (
           <form onSubmit={handleDailySave} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
