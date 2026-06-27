@@ -134,20 +134,31 @@ export function formatUSD(n) {
   return `${num.toLocaleString('en-US', { maximumFractionDigits: 0 })} $`;
 }
 
-// Every other income stream's currency - displayed in thousands (ألف ر.ي)
-// Storage stays in actual YER; this formatter just divides by 1000.
+// YER currency model:
+// • Storage: actual YER value (e.g. 7000)
+// • Input:   user types in thousands — typing "7" means 7,000 YER
+//            typing "1000" means 1,000,000 YER (= 1 مليون)
+// • Display: auto-selects best unit:
+//     < 1,000,000 → "7 ألف ر.ي"
+//     ≥ 1,000,000 → "1.5 مليون ر.ي"
 export function formatYER(n) {
   const num = Number(n) || 0;
+  if (num === 0) return '0 ر.ي';
+  if (num >= 1_000_000) {
+    const m = num / 1_000_000;
+    const fmt = m % 1 === 0
+      ? m.toLocaleString('en-US', { maximumFractionDigits: 0 })
+      : m.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    return `${fmt} مليون ر.ي`;
+  }
   const k = num / 1000;
-  // show one decimal only when needed (e.g. 7.5 ألف), strip trailing ".0"
-  const formatted = k % 1 === 0
+  const fmt = k % 1 === 0
     ? k.toLocaleString('en-US', { maximumFractionDigits: 0 })
     : k.toLocaleString('en-US', { maximumFractionDigits: 1 });
-  return `${formatted} ألف ر.ي`;
+  return `${fmt} ألف ر.ي`;
 }
 
-// YER inputs: user types in thousands → value shown is stored/1000
-// The input itself converts on blur: stored value = typed * 1000
+// Input helpers: user always types in thousands (1 = 1,000 YER)
 export function toYERDisplay(storedValue) {
   const n = Number(storedValue) || 0;
   return n === 0 ? '' : String(n / 1000);

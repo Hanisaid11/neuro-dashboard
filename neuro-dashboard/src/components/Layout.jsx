@@ -1,13 +1,14 @@
 import React from 'react';
-import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain, TableProperties, Stethoscope } from 'lucide-react';
+import { LayoutDashboard, Wallet, Scissors, CalendarRange, CloudCog, Brain, TableProperties, Stethoscope, GitCompare } from 'lucide-react';
 
 export const NAV_ITEMS = [
-  { key: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
-  { key: 'monthly', label: 'المدخولات الشهرية', icon: TableProperties },
-  { key: 'income', label: 'إدخال المدخولات', icon: Wallet },
-  { key: 'operations', label: 'العمليات', icon: Scissors },
-  { key: 'leave', label: 'الإجازات والإعدادات', icon: CalendarRange },
-  { key: 'sync', label: 'المزامنة والنسخ الاحتياطي', icon: CloudCog }
+  { key: 'dashboard',   label: 'الرئيسية',                icon: LayoutDashboard },
+  { key: 'monthly',     label: 'المدخولات الشهرية',       icon: TableProperties },
+  { key: 'comparison',  label: 'مقارنة الشهور',            icon: GitCompare },
+  { key: 'income',      label: 'إدخال المدخولات',          icon: Wallet },
+  { key: 'operations',  label: 'العمليات',                 icon: Scissors },
+  { key: 'leave',       label: 'الإجازات والإعدادات',      icon: CalendarRange },
+  { key: 'sync',        label: 'المزامنة والنسخ الاحتياطي', icon: CloudCog }
 ];
 
 export default function Layout({ active, onNavigate, children }) {
@@ -93,12 +94,13 @@ export default function Layout({ active, onNavigate, children }) {
             const isActive = active === item.key;
             // Short labels for the cramped mobile bar
             const SHORT = {
-              dashboard: 'الرئيسية',
-              monthly: 'الشهري',
-              income: 'إدخال',
+              dashboard:  'الرئيسية',
+              monthly:    'الشهري',
+              comparison: 'مقارنة',
+              income:     'إدخال',
               operations: 'العمليات',
-              leave: 'الإجازات',
-              sync: 'المزامنة'
+              leave:      'الإجازات',
+              sync:       'المزامنة'
             };
             return (
               <button

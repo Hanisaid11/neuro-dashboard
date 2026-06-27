@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Layout from './components/Layout.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import MonthlyBreakdown from './pages/MonthlyBreakdown.jsx';
+import MonthlyComparison from './pages/MonthlyComparison.jsx';
 import IncomeEntry from './pages/IncomeEntry.jsx';
 import OperationsLog from './pages/OperationsLog.jsx';
 import LeaveSettings from './pages/LeaveSettings.jsx';
@@ -32,6 +33,7 @@ export default function App() {
     <Layout active={page} onNavigate={navigateTo}>
       {page === 'dashboard'   && <Dashboard onNavigate={navigateTo} />}
       {page === 'monthly'     && <MonthlyBreakdown />}
+      {page === 'comparison'  && <MonthlyComparison />}
       {page === 'income'      && <IncomeEntry defaultTab={incomeTab} onTabChange={setIncomeTab} />}
       {page === 'operations'  && <OperationsLog />}
       {page === 'leave'       && <LeaveSettings />}
