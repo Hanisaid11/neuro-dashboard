@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Save, Trash2, Wallet } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { upsertMonthlySalary } from '../../db/actions.js';
@@ -14,19 +14,24 @@ export default function SalaryTab() {
   const [amount, setAmount] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Auto-load existing salary for the selected month/year so switching
+  // months via the picker shows what was already saved instead of blank.
+  useEffect(() => {
+    const existing = monthlySalaries.find((s) => s.year === year && s.month === month);
+    setAmount(existing ? String(existing.amount) : '');
+  }, [year, month, monthlySalaries]);
+
   async function handleSave(e) {
     e.preventDefault();
     if (!amount) return;
     setSaving(true);
     await upsertMonthlySalary(year, month, Number(amount));
     setSaving(false);
-    setAmount('');
   }
 
   function loadRow(row) {
     setYear(row.year);
     setMonth(row.month);
-    setAmount(String(row.amount));
   }
 
   const sorted = [...monthlySalaries].sort((a, b) => b.year - a.year || b.month - a.month);

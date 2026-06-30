@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Save, Trash2, Percent, ChevronDown, ChevronUp } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { upsertFixedPercentages, deleteFixedPercentages } from '../../db/actions.js';
@@ -34,6 +34,24 @@ export default function FixedPercentagesTab() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Whenever the selected month/year (or the underlying data) changes,
+  // load any already-saved values for that month into the form instead of
+  // leaving it blank - this was the bug: switching months via the picker
+  // didn't restore previously saved amounts/notes.
+  useEffect(() => {
+    const existing = fixedPercentages.find((f) => f.year === year && f.month === month);
+    if (existing) {
+      const f = {};
+      FIELDS.forEach(({ key, noteKey }) => {
+        f[key] = toYERDisplay(existing[key]);
+        f[noteKey] = existing[noteKey] || '';
+      });
+      setForm(f);
+    } else {
+      setForm(emptyForm());
+    }
+  }, [year, month, fixedPercentages]);
+
   async function handleSave(e) {
     e.preventDefault();
     setSaving(true);
@@ -44,7 +62,6 @@ export default function FixedPercentagesTab() {
     });
     await upsertFixedPercentages(year, month, fields);
     setSaving(false);
-    setForm(emptyForm());
   }
 
   function loadRow(row) {
