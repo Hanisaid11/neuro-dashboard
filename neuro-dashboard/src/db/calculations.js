@@ -80,7 +80,11 @@ export function computeMonthData(year, month, data) {
   const othersTotal = onCallCounted
     .filter((e) => e.hospital === 'others')
     .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-  const onCallTotal = oldHospitalTotal + newHospitalTotal + consultationsTotal + othersTotal;
+  // "combined" = a lump monthly total entered without breaking down by type
+  const combinedTotal = onCallCounted
+    .filter((e) => e.hospital === 'combined')
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  const onCallTotal = oldHospitalTotal + newHospitalTotal + consultationsTotal + othersTotal + combinedTotal;
 
   const monthMeds = medicationEntries.filter((e) => isDateInRange(e.date, monthStart, monthEnd));
   const medsCounted = monthMeds.filter((e) => !isDateOnLeave(e.date, leavePeriods));
@@ -105,6 +109,7 @@ export function computeMonthData(year, month, data) {
     newHospitalTotal,
     consultationsTotal,
     othersTotal,
+    combinedTotal,
     onCallTotal,
     medicationsTotal,
     fixed,
@@ -126,6 +131,7 @@ export function computeFiscalYearSummary(label, data) {
     newHospitalTotal: sumField('newHospitalTotal'),
     consultationsTotal: sumField('consultationsTotal'),
     othersTotal: sumField('othersTotal'),
+    combinedTotal: sumField('combinedTotal'),
     onCallTotal: sumField('onCallTotal'),
     medicationsTotal: sumField('medicationsTotal'),
     fixedTotal: sumField('fixedTotal'),

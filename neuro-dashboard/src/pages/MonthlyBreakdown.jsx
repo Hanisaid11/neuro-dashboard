@@ -101,6 +101,11 @@ function MonthRow({ m, fixedRow, monthlyPhotos, defaultOpen }) {
                     <span>أخرى</span><span className="tnum">{formatYER(m.othersTotal)}</span>
                   </div>
                 )}
+                {m.combinedTotal > 0 && (
+                  <div className="flex justify-between text-xs text-muted">
+                    <span>إجمالي بدون تفصيل</span><span className="tnum">{formatYER(m.combinedTotal)}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}

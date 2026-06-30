@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Save, Trash2, Pill, CalendarDays, CalendarRange } from 'lucide-react';
 import { useFinanceData } from '../../hooks/useFinanceData.js';
 import { addMedicationEntry, deleteMedicationEntry } from '../../db/actions.js';
@@ -24,6 +24,15 @@ export default function MedicationsTab() {
   const [bulkItemName, setBulkItemName] = useState('');
   const [bulkAmount, setBulkAmount] = useState(''); // display value in thousands
 
+  // Auto-load any existing bulk entry for this month so switching months
+  // shows what was already saved instead of staying blank.
+  useEffect(() => {
+    const entryDate = new Date(bulkYear, bulkMonth - 1, 1).toISOString().slice(0, 10);
+    const existing = medicationEntries.find((e) => e.date === entryDate && e.isBulk);
+    setBulkAmount(existing ? toYERDisplay(existing.amount) : '');
+    setBulkItemName(existing?.itemName || '');
+  }, [bulkYear, bulkMonth, medicationEntries]);
+
   async function handleDailySave(e) {
     e.preventDefault();
     if (!amount) return;
@@ -36,14 +45,15 @@ export default function MedicationsTab() {
     e.preventDefault();
     if (!bulkAmount) return;
     const entryDate = new Date(bulkYear, bulkMonth - 1, 1).toISOString().slice(0, 10);
+    // Update existing bulk entry for this month instead of duplicating it
+    const existing = medicationEntries.find((e) => e.date === entryDate && e.isBulk);
+    if (existing) await deleteMedicationEntry(existing.id);
     await addMedicationEntry({
       date: entryDate,
       itemName: bulkItemName || `إجمالي ${arabicMonthName(bulkMonth)} ${bulkYear}`,
       amount: fromYERDisplay(bulkAmount),
       isBulk: true
     });
-    setBulkItemName('');
-    setBulkAmount('');
   }
 
   const sorted = useMemo(
